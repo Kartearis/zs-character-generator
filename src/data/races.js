@@ -21,9 +21,7 @@ export default {
       max: 8,
     },
     requirements: (stats) => stats.str.value >= 9,
-    postProcessing: () => {
-
-    },
+    postProcessing: () => {},
   },
   elf: {
     title: 'Эльф',
@@ -39,7 +37,10 @@ export default {
         special: 'Сопротивление параличу гулей',
       },
     ],
-    itemFilter: () => {},
+    itemFilter: (item) => {
+      const restricted = ['Латы', 'Двуручный меч', 'Алебарда'];
+      return !restricted.includes(item.label);
+    },
     hp: {
       min: 4,
       max: 9,
@@ -70,7 +71,10 @@ export default {
         special: 'Отгон оборотней (сложность 9 - уровень)',
       },
     ],
-    itemFilter: () => {},
+    itemFilter: (item) => {
+      const allowed = ['Кинжал','Серебряный кинжал','Золотой кинжал','Кожаный доспех'];
+      return allowed.includes(item.label);
+    },
     hp: {
       min: 5,
       max: 10,
@@ -99,7 +103,13 @@ export default {
         special: 'Отгон животных (сложность 9 - уровень)',
       },
     ],
-    itemFilter: () => {},
+    itemFilter: (item) => {
+      const restrictedArmor = ['Латы'];
+      const allowedWeapons = ['Короткий меч', 'Короткий лук'];
+      if (item.defence && !restrictedArmor.includes(item.label)) return true;
+      if (item.attack && allowedWeapons.includes(item.label)) return true;
+      return false;
+    },
     hp: {
       min: 5,
       max: 7,
@@ -129,7 +139,10 @@ export default {
       },
       abilities.armorClass1,
     ],
-    itemFilter: () => {},
+    itemFilter: (item) => {
+      const restricted = ['Латы', 'Двуручный меч', 'Длинный меч', 'Длинный лук', 'Алебарда'];
+      return !restricted.includes(item.label);
+    },
     hp: {
       min: 6,
       max: 8,
