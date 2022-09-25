@@ -91,6 +91,8 @@ import {
 } from '@/data/items';
 import races from '../data/races';
 
+// TODO: make price changes for dwarf!!
+
 export default {
   name: 'GeneratorView',
   props: ['raceId'],
