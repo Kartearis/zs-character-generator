@@ -19,7 +19,7 @@
           v-for="(stat, key) in characterSheet.stats"
           :key="key"
           :label="stat.label"
-          v-model="stat.value"
+          :value="`${stat.value}${stat.modified ? '*' : ''}`"
         >
         </v-text-field>
       </v-card-text>
@@ -41,10 +41,10 @@
       <v-card-title>Умения</v-card-title>
       <v-card-text>
         <v-text-field
-          v-for="(item) in characterSheet.abilities"
-          :key="item.label"
+          v-for="(item, index) in characterSheet.abilities"
+          :key="item.label + index"
           :label="item.label"
-          :value="item.special ? item.special.description : ''"
+          :value="item.special"
           readonly
         >
         </v-text-field>
@@ -57,7 +57,7 @@
           v-for="(item) in characterSheet.spells"
           :key="item.label"
           :label="item.label"
-          :value="`${item.special ? item.special.description : ''} x${item.amount}`"
+          :value="`${item.special ?? ''} x${item.amount}`"
           readonly
         >
         </v-text-field>
@@ -68,10 +68,26 @@
       <v-card-text>
       </v-card-text>
     </v-card>
+    <v-fab-transition>
+      <v-btn
+        color="blue"
+        dark
+        fixed
+        bottom
+        right
+        fab
+        @click="this.generateCharacter"
+      >
+        <v-icon>mdi-progress-wrench</v-icon>
+      </v-btn>
+    </v-fab-transition>
   </v-container>
 </template>
 
 <script>
+import modifiers from '@/data/modifiers';
+import races from '../data/races';
+
 export default {
   name: 'GeneratorView',
   props: ['raceId'],
@@ -80,45 +96,45 @@ export default {
       header: {
         name: {
           label: 'Имя',
-          value: ''
+          value: '',
         },
         race: {
           label: 'Раса/Класс',
-          value: ''
+          value: '',
         },
         hp: {
           label: 'ХП (ОР)',
-          value: ''
+          value: '',
         },
         ac: {
           label: 'КД',
-          value: ''
+          value: '',
         },
         level: {
           label: 'Уровень',
-          value: 0
-        }
+          value: 0,
+        },
       },
       stats: {
         str: {
           label: 'Сила',
-          value: ''
+          value: '',
         },
         dex: {
           label: 'Ловкость',
-          value: ''
+          value: '',
         },
         wis: {
           label: 'Мудрость',
-          value: ''
+          value: '',
         },
         con: {
           label: 'Телосложение',
-          value: ''
+          value: '',
         },
         bra: {
           label: 'Храбрость',
-          value: ''
+          value: '',
         },
       },
       items: [
@@ -129,9 +145,73 @@ export default {
       ],
       abilities: [
 
-      ]
-    }
-  })
+      ],
+    },
+  }),
+  methods: {
+    randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min) + min);
+    },
+    reset() {
+      Object.keys(this.characterSheet.stats).forEach((key) => {
+        this.characterSheet.stats[key] = {
+          label: this.characterSheet.stats[key].label,
+          value: "",
+          modified: false,
+        };
+      });
+    },
+    generateStat() {
+      const rolls = [
+        this.randomInt(1, 6),
+        this.randomInt(1, 6),
+        this.randomInt(1, 6),
+        this.randomInt(1, 6),
+      ];
+      return rolls
+        .sort((a, b) => b - a)
+        .slice(0, 3)
+        .reduce((s, x) => s + x);
+    },
+    generateStats() {
+      Object.keys(this.characterSheet.stats).forEach((key) => {
+        this.characterSheet.stats[key].value = this.generateStat();
+      });
+    },
+    generateHp() {
+      const { min, max } = races[this.raceId].hp;
+      this.characterSheet.header.hp.value = this.randomInt(min, max);
+    },
+    generateItems() {
+
+    },
+    generateName() {
+      this.characterSheet.header.name.value = 'Klevandos Ortego';
+    },
+    applyModifiers() {
+      this.characterSheet.spells = [];
+      races[this.raceId].postProcessing(this.characterSheet);
+      modifiers.forEach((modifier) => {
+        modifier(this.characterSheet);
+      });
+    },
+    copyAbilities() {
+      this.characterSheet.abilities = structuredClone(races[this.raceId].abilities);
+    },
+    generateCharacter() {
+      this.reset();
+      this.characterSheet.header.race.value = races[this.raceId].title;
+      this.generateName();
+      this.generateHp();
+      this.generateStats();
+      while (this.raceId && !races[this.raceId].requirements(this.characterSheet.stats)) {
+        this.generateStats();
+      }
+      this.copyAbilities();
+      this.applyModifiers();
+      this.generateItems();
+    },
+  },
 };
 </script>
 
