@@ -76,95 +76,95 @@ export default {
     special: '-1 к КД',
     modifier: {
       type: 'ac',
-      value: -1
-    }
+      value: -1,
+    },
   },
   armorClass2: {
     label: 'Улучшение КД',
     special: '-2 к КД',
     modifier: {
       type: 'ac',
-      value: -2
-    }
+      value: -2,
+    },
   },
   armorClass3: {
     label: 'Улучшение КД',
     special: '-3 к КД',
     modifier: {
       type: 'ac',
-      value: -3
-    }
+      value: -3,
+    },
   },
   armorClassN1: {
     label: 'Ухудшение КД',
     special: '+1 к КД',
     modifier: {
       type: 'ac',
-      value: 1
-    }
+      value: 1,
+    },
   },
   armorClassN2: {
     label: 'Ухудшение КД',
     special: '+2 к КД',
     modifier: {
       type: 'ac',
-      value: 2
-    }
+      value: 2,
+    },
   },
   armorClassN3: {
     label: 'Ухудшение КД',
     special: '+3 к КД',
     modifier: {
       type: 'ac',
-      value: 3
-    }
+      value: 3,
+    },
   },
   health1: {
     label: 'Улучшение ХП',
     special: '+1 к ХП',
     modifier: {
       type: 'hp',
-      value: 1
-    }
+      value: 1,
+    },
   },
   health2: {
     label: 'Улучшение ХП',
     special: '+2 к ХП',
     modifier: {
       type: 'hp',
-      value: 2
-    }
+      value: 2,
+    },
   },
   health3: {
     label: 'Улучшение ХП',
     special: '+3 к ХП',
     modifier: {
       type: 'hp',
-      value: 3
-    }
+      value: 3,
+    },
   },
   healthN1: {
     label: 'Уменьшение ХП',
     special: '-1 к ХП',
     modifier: {
       type: 'hp',
-      value: -1
-    }
+      value: -1,
+    },
   },
   healthN2: {
     label: 'Уменьшение ХП',
     special: '-2 к ХП',
     modifier: {
       type: 'hp',
-      value: -2
-    }
+      value: -2,
+    },
   },
   healthN3: {
     label: 'Уменьшение ХП',
     special: '-3 к ХП',
     modifier: {
       type: 'hp',
-      value: -3
-    }
+      value: -3,
+    },
   },
 };

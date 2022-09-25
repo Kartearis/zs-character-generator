@@ -86,8 +86,10 @@
 
 <script>
 import modifiers from '@/data/modifiers';
+import {
+  armor, weapons, ammo, bags, items, animals, stone,
+} from '@/data/items';
 import races from '../data/races';
-import { armor, weapons, ammo, bags, items, animals, stone } from '@/data/items';
 
 export default {
   name: 'GeneratorView',
@@ -176,15 +178,11 @@ export default {
         .reduce((s, x) => s + x);
     },
     showItem(item, amount) {
-      if (item.label === 'Деньги')
-        return `Монеты ${amount}`;
-      if (item.defence)
-        return `КД ${item.defence} ${amount > 1 ? 'x'+amount : ''}`;
-      if (item.attack)
-        return `${item.ranged === true ? 'ДБ' : 'ББ'} ${item.attack.min} - ${item.attack.max} ${amount > 1 ? 'x'+amount : ''}`;
-      if (item.special)
-        return `${item.special} ${amount > 1 ? 'x'+amount : ''}`;
-      return `${item.label} ${amount > 1 ? 'x'+amount : ''}`;
+      if (item.label === 'Деньги') return `Монеты ${amount}`;
+      if (item.defence) return `КД ${item.defence} ${amount > 1 ? `x${amount}` : ''}`;
+      if (item.attack) return `${item.ranged === true ? 'ДБ' : 'ББ'} ${item.attack.min} - ${item.attack.max} ${amount > 1 ? `x${amount}` : ''}`;
+      if (item.special) return `${item.special} ${amount > 1 ? `x${amount}` : ''}`;
+      return `${item.label} ${amount > 1 ? `x${amount}` : ''}`;
     },
     generateStats() {
       Object.keys(this.characterSheet.stats).forEach((key) => {
@@ -200,91 +198,86 @@ export default {
       let money = this.generateStat() * 10;
       this.characterSheet.items.push({
         item: {
-          label: 'Деньги'
+          label: 'Деньги',
         },
         amount: money,
       });
       const allowedArmor = armor.filter(races[this.raceId].itemFilter)
         .filter((item) => item.price < money)
-        .sort((a,b) => b.price - a.price);
+        .sort((a, b) => b.price - a.price);
       if (allowedArmor.length > 0) {
         this.characterSheet.items.push({
           item: allowedArmor[0],
-          amount: 1
+          amount: 1,
         });
         money -= allowedArmor[0].price;
       }
-      const shield = allowedArmor.find((x)=>x.label==="Щит");
+      const shield = allowedArmor.find((x) => x.label === 'Щит');
       let shieldTaken = false;
-      if (money > 50 && shield && this.randomInt(0, 10) > 2)
-      {
+      if (money > 50 && shield && this.randomInt(0, 10) > 2) {
         this.characterSheet.items.push({
           item: shield,
-          amount: 1
+          amount: 1,
         });
         money -= shield.price;
         shieldTaken = true;
       }
       const allowedWeaponsMelee = weapons.filter(races[this.raceId].itemFilter)
         .filter((item) => item.price < money && item.ranged !== true && (shieldTaken ? item.twoHanded !== true : true))
-        .sort((a,b) => b.attack.max - a.attack.max);
+        .sort((a, b) => b.attack.max - a.attack.max);
       const allowedWeaponsRanged = weapons.filter(races[this.raceId].itemFilter)
         .filter((item) => item.price < money && item.ranged === true && (shieldTaken ? item.twoHanded !== true : true))
-        .sort((a,b) => b.attack.max - a.attack.max);
-      if (allowedWeaponsMelee.length > 0 && allowedWeaponsRanged.length > 0)
-        if (this.randomInt(0,10) > 2) {
+        .sort((a, b) => b.attack.max - a.attack.max);
+      if (allowedWeaponsMelee.length > 0 && allowedWeaponsRanged.length > 0) {
+        if (this.randomInt(0, 10) > 2) {
           this.characterSheet.items.push({
             item: allowedWeaponsMelee[0],
-            amount: 1
+            amount: 1,
           });
           money -= allowedWeaponsMelee[0].price;
-        }
-        else {
+        } else {
           this.characterSheet.items.push({
             item: allowedWeaponsRanged[0],
-            amount: 1
+            amount: 1,
           });
           money -= allowedWeaponsRanged[0].price;
         }
-      else {
-        if (allowedWeaponsMelee.length > 0)
-        {
-          this.characterSheet.items.push({
-            item: allowedWeaponsMelee[0],
-            amount: 1
-          });
-          money -= allowedWeaponsMelee[0].price;
-        }
-        else if (allowedWeaponsRanged.length > 0) {
-          this.characterSheet.items.push({
-            item: allowedWeaponsRanged[0],
-            amount: 1
-          });
-          money -= allowedWeaponsRanged[0].price;
-        }
-        else this.characterSheet.items.push({
+      } else if (allowedWeaponsMelee.length > 0) {
+        this.characterSheet.items.push({
+          item: allowedWeaponsMelee[0],
+          amount: 1,
+        });
+        money -= allowedWeaponsMelee[0].price;
+      } else if (allowedWeaponsRanged.length > 0) {
+        this.characterSheet.items.push({
+          item: allowedWeaponsRanged[0],
+          amount: 1,
+        });
+        money -= allowedWeaponsRanged[0].price;
+      } else {
+        this.characterSheet.items.push({
           item: stone,
-          amount: 1
+          amount: 1,
         });
       }
       const ammoRequired = this.characterSheet.items
         .filter((item) => item.item.ammo)
         .map((item) => item.item.ammo);
-      if (ammoRequired.length > 0)
+      if (ammoRequired.length > 0) {
         ammoRequired.forEach((ammoName) => {
           const ammoItem = ammo.find((item) => item.label === ammoName);
           if (ammoItem.price < money) {
             const amount = money >= ammoItem.price * 12 ? 12 : money / ammoItem.price;
             this.characterSheet.items.push({
               item: ammoItem,
-              amount: amount
+              amount,
             });
             money -= ammoItem.price * amount;
           }
         });
+      }
       this.characterSheet.items.find((item) => item.item.label === 'Деньги')
         .amount = money;
-
     },
     generateName() {
       this.characterSheet.header.name.value = 'Klevandos Ortego';
@@ -304,13 +297,11 @@ export default {
         .map((item) => item.item);
       const topArmor = itemsSimplified
         .filter((item) => typeof item.defence === 'number')
-        .sort((a,b) => b.defence - a.defence)
+        .sort((a, b) => b.defence - a.defence)
         .at(0);
       let ac = 8;
-      if (topArmor)
-        ac = topArmor.defence;
-      if (itemsSimplified.find((item) => item.label === 'Щит'))
-        ac -= 1;
+      if (topArmor) ac = topArmor.defence;
+      if (itemsSimplified.find((item) => item.label === 'Щит')) ac -= 1;
       this.characterSheet.abilities
         .filter((ability) => ability.modifier && ability.modifier.type === 'ac')
         .forEach((ability) => {
@@ -326,7 +317,7 @@ export default {
       this.characterSheet.header.hp.value = hp;
       // Can be disabled to show what affected ac and hp
       this.characterSheet.abilities = this.characterSheet.abilities
-        .filter((ability) => !ability.modifier || !['ac','hp'].includes(ability.modifier.type));
+        .filter((ability) => !ability.modifier || !['ac', 'hp'].includes(ability.modifier.type));
     },
     generateCharacter() {
       this.reset();

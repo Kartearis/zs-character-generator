@@ -72,7 +72,7 @@ export default {
       },
     ],
     itemFilter: (item) => {
-      const allowed = ['Кинжал','Серебряный кинжал','Золотой кинжал','Кожаный доспех'];
+      const allowed = ['Кинжал', 'Серебряный кинжал', 'Золотой кинжал', 'Кожаный доспех'];
       return allowed.includes(item.label);
     },
     hp: {
