@@ -156,7 +156,7 @@ export default {
       Object.keys(this.characterSheet.stats).forEach((key) => {
         this.characterSheet.stats[key] = {
           label: this.characterSheet.stats[key].label,
-          value: "",
+          value: '',
           modified: false,
         };
       });
@@ -183,7 +183,15 @@ export default {
       this.characterSheet.header.hp.value = this.randomInt(min, max);
     },
     generateItems() {
-
+      this.characterSheet.items = [];
+      this.characterSheet.items.push({
+        label: 'Деньги',
+        special: {
+          description: 'Монеты',
+          id: 'money',
+        },
+        amount: this.generateStat() * 10,
+      });
     },
     generateName() {
       this.characterSheet.header.name.value = 'Klevandos Ortego';
