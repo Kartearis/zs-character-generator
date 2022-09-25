@@ -151,7 +151,8 @@ export default {
   }),
   methods: {
     randomInt(min, max) {
-      return Math.floor(Math.random() * (max - min) + min);
+      // Can be made more hardcore by switching round with floor
+      return Math.round(Math.random() * (max - min) + min);
     },
     reset() {
       Object.keys(this.characterSheet.stats).forEach((key) => {
@@ -225,11 +226,10 @@ export default {
         shieldTaken = true;
       }
       const allowedWeaponsMelee = weapons.filter(races[this.raceId].itemFilter)
-        .filter((item) => item.price < money && item.ranged !== true)
+        .filter((item) => item.price < money && item.ranged !== true && (shieldTaken ? item.twoHanded !== true : true))
         .sort((a,b) => b.attack.max - a.attack.max);
-      console.log(allowedWeaponsMelee);
       const allowedWeaponsRanged = weapons.filter(races[this.raceId].itemFilter)
-        .filter((item) => item.price < money && item.ranged === true)
+        .filter((item) => item.price < money && item.ranged === true && (shieldTaken ? item.twoHanded !== true : true))
         .sort((a,b) => b.attack.max - a.attack.max);
       if (allowedWeaponsMelee.length > 0 && allowedWeaponsRanged.length > 0)
         if (this.randomInt(0,10) > 2) {
@@ -299,6 +299,35 @@ export default {
     copyAbilities() {
       this.characterSheet.abilities = structuredClone(races[this.raceId].abilities);
     },
+    calculateArmorAndHp() {
+      const itemsSimplified = this.characterSheet.items
+        .map((item) => item.item);
+      const topArmor = itemsSimplified
+        .filter((item) => typeof item.defence === 'number')
+        .sort((a,b) => b.defence - a.defence)
+        .at(0);
+      let ac = 8;
+      if (topArmor)
+        ac = topArmor.defence;
+      if (itemsSimplified.find((item) => item.label === 'Щит'))
+        ac -= 1;
+      this.characterSheet.abilities
+        .filter((ability) => ability.modifier && ability.modifier.type === 'ac')
+        .forEach((ability) => {
+          ac += ability.modifier.value;
+        });
+      this.characterSheet.header.ac.value = ac;
+      let hp = this.characterSheet.header.hp.value;
+      this.characterSheet.abilities
+        .filter((ability) => ability.modifier && ability.modifier.type === 'hp')
+        .forEach((ability) => {
+          hp += ability.modifier.value;
+        });
+      this.characterSheet.header.hp.value = hp;
+      // Can be disabled to show what affected ac and hp
+      this.characterSheet.abilities = this.characterSheet.abilities
+        .filter((ability) => !ability.modifier || !['ac','hp'].includes(ability.modifier.type));
+    },
     generateCharacter() {
       this.reset();
       this.characterSheet.header.race.value = races[this.raceId].title;
@@ -311,6 +340,7 @@ export default {
       this.copyAbilities();
       this.applyModifiers();
       this.generateItems();
+      this.calculateArmorAndHp();
     },
   },
 };

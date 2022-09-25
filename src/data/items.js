@@ -32,7 +32,7 @@ const armor = [
   },
   {
     label: 'Щит',
-    defence: '+1',
+    defence: '-1',
     price: 15
   },
 ];
@@ -59,6 +59,7 @@ const weapons = [
     attack: {
       min: 4, max: 9
     },
+    twoHanded: true,
     ranged: false,
     price: 35
   },
@@ -91,6 +92,7 @@ const weapons = [
     attack: {
       min: 3, max: 8
     },
+    twoHanded: true,
     ranged: false,
     price: 25
   },
@@ -119,19 +121,12 @@ const weapons = [
     price: 30
   },
   {
-    label: 'Боевой топор',
-    attack: {
-      min: 1, max: 9
-    },
-    ranged: false,
-    price: 30
-  },
-  {
     label: 'Длинный лук',
     attack: {
       min: 2, max: 7
     },
     ammo: 'Длинная стрела',
+    twoHanded: true,
     ranged: true,
     price: 40
   },
@@ -141,6 +136,7 @@ const weapons = [
       min: 1, max: 6
     },
     ammo: 'Короткая стрела',
+    twoHanded: true,
     ranged: true,
     price: 25
   },
