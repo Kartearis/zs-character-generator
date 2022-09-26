@@ -87,7 +87,7 @@
 <script>
 import modifiers from '@/data/modifiers';
 import {
-  armor, weapons, ammo, bags, items, animals, stone,
+  armor, weapons, ammo, stone,
 } from '@/data/items';
 import races from '../data/races';
 
@@ -167,6 +167,9 @@ export default {
         };
       });
     },
+    modifyPrice(price, addition = 0, multiplier = 1) {
+      return price * multiplier + addition;
+    },
     generateStat() {
       const rolls = [
         this.randomInt(1, 6),
@@ -198,21 +201,26 @@ export default {
     generateItems() {
       this.characterSheet.items = [];
       let money = this.generateStat() * 10;
+      console.log('Generated money', money);
       this.characterSheet.items.push({
         item: {
           label: 'Деньги',
         },
         amount: money,
       });
+      // TODO: REFACTOR IT ALL
+      // Offset armor price for dwarf
+      let calculatePrice = (price) => price;
+      if (this.characterSheet.abilities.find((ability) => ability.label === 'Требуется подгонка')) calculatePrice = (price) => this.modifyPrice(price, 5);
       const allowedArmor = armor.filter(races[this.raceId].itemFilter)
-        .filter((item) => item.price < money)
+        .filter((item) => calculatePrice(item.price) < money)
         .sort((a, b) => b.price - a.price);
       if (allowedArmor.length > 0) {
         this.characterSheet.items.push({
           item: allowedArmor[0],
           amount: 1,
         });
-        money -= allowedArmor[0].price;
+        money -= calculatePrice(allowedArmor[0].price);
       }
       const shield = allowedArmor.find((x) => x.label === 'Щит');
       let shieldTaken = false;
@@ -221,14 +229,16 @@ export default {
           item: shield,
           amount: 1,
         });
-        money -= shield.price;
+        money -= calculatePrice(shield.price);
         shieldTaken = true;
       }
       const allowedWeaponsMelee = weapons.filter(races[this.raceId].itemFilter)
-        .filter((item) => item.price < money && item.ranged !== true && (shieldTaken ? item.twoHanded !== true : true))
+        .filter((item) => item.price < money && item.ranged !== true
+          && (shieldTaken ? item.twoHanded !== true : true))
         .sort((a, b) => b.attack.max - a.attack.max);
       const allowedWeaponsRanged = weapons.filter(races[this.raceId].itemFilter)
-        .filter((item) => item.price < money && item.ranged === true && (shieldTaken ? item.twoHanded !== true : true))
+        .filter((item) => item.price < money && item.ranged === true
+          && (shieldTaken ? item.twoHanded !== true : true))
         .sort((a, b) => b.attack.max - a.attack.max);
       if (allowedWeaponsMelee.length > 0 && allowedWeaponsRanged.length > 0) {
         if (this.randomInt(0, 10) > 2) {
