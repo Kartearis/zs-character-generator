@@ -2,7 +2,7 @@
   <div id="app">
     <v-app>
       <v-app-bar app>
-        <!-- -->
+        <router-link to="/">К настройкам</router-link>
       </v-app-bar>
       <v-main app>
         <router-view/>
