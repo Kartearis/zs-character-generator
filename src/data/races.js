@@ -1,7 +1,7 @@
 import abilities from '@/data/abilities';
 import { spellsByLevels } from '@/data/spells';
 
-function selectFromList(list) {
+export function selectFromList(list) {
   const id = Math.floor(Math.random() * list.length);
   return list[id];
 }

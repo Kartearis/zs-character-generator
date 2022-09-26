@@ -28,8 +28,8 @@
       <v-card-title>Предметы</v-card-title>
       <v-card-text>
         <v-text-field
-          v-for="(item) in characterSheet.items"
-          :key="item.item.label"
+          v-for="(item, index) in characterSheet.items"
+          :key="item.item.label + index"
           :label="item.item.label"
           :value="showItem(item.item, item.amount)"
           readonly
@@ -90,6 +90,7 @@ import {
   armor, weapons, ammo, stone,
 } from '@/data/items';
 import races from '../data/races';
+import { selectFromList } from '../data/races';
 
 // TODO: make price changes for dwarf!!
 
@@ -216,11 +217,15 @@ export default {
         .filter((item) => calculatePrice(item.price) < money)
         .sort((a, b) => b.price - a.price);
       if (allowedArmor.length > 0) {
+        // In rare cases do not prioritize armor
+        let item = allowedArmor[0];
+        if (this.randomInt(0, 20) < 3)
+          item = selectFromList(allowedArmor.filter((arm) => arm.label !== 'Щит'));
         this.characterSheet.items.push({
-          item: allowedArmor[0],
+          item,
           amount: 1,
         });
-        money -= calculatePrice(allowedArmor[0].price);
+        money -= calculatePrice(item.price);
       }
       const shield = allowedArmor.find((x) => x.label === 'Щит');
       let shieldTaken = false;
@@ -241,12 +246,21 @@ export default {
           && (shieldTaken ? item.twoHanded !== true : true))
         .sort((a, b) => b.attack.max - a.attack.max);
       if (allowedWeaponsMelee.length > 0 && allowedWeaponsRanged.length > 0) {
-        if (this.randomInt(0, 10) > 2) {
+        if (this.randomInt(0, 10) > 3) {
           this.characterSheet.items.push({
             item: allowedWeaponsMelee[0],
             amount: 1,
           });
           money -= allowedWeaponsMelee[0].price;
+          if (allowedWeaponsMelee[0].twoHanded !== true
+            && money >= allowedWeaponsMelee[0].price && !shieldTaken && this.randomInt(0,10) < 3)
+          {
+            this.characterSheet.items.push({
+              item: allowedWeaponsMelee[0],
+              amount: 1,
+            });
+            money -= allowedWeaponsMelee[0].price;
+          }
         } else {
           this.characterSheet.items.push({
             item: allowedWeaponsRanged[0],
