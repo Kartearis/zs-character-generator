@@ -89,8 +89,8 @@ import modifiers from '@/data/modifiers';
 import {
   armor, weapons, ammo, stone,
 } from '@/data/items';
-import races from '../data/races';
-import { selectFromList } from '../data/races';
+import NameGenerator from '@/controllers/nameGenerator';
+import races, { selectFromList } from '../data/races';
 
 // TODO: make price changes for dwarf!!
 
@@ -153,6 +153,7 @@ export default {
 
       ],
     },
+    nameGenerator: new NameGenerator(),
   }),
   methods: {
     randomInt(min, max) {
@@ -219,8 +220,7 @@ export default {
       if (allowedArmor.length > 0) {
         // In rare cases do not prioritize armor
         let item = allowedArmor[0];
-        if (this.randomInt(0, 20) < 3)
-          item = selectFromList(allowedArmor.filter((arm) => arm.label !== 'Щит'));
+        if (this.randomInt(0, 20) < 3) item = selectFromList(allowedArmor.filter((arm) => arm.label !== 'Щит'));
         this.characterSheet.items.push({
           item,
           amount: 1,
@@ -253,8 +253,7 @@ export default {
           });
           money -= allowedWeaponsMelee[0].price;
           if (allowedWeaponsMelee[0].twoHanded !== true
-            && money >= allowedWeaponsMelee[0].price && !shieldTaken && this.randomInt(0,10) < 3)
-          {
+            && money >= allowedWeaponsMelee[0].price && !shieldTaken && this.randomInt(0, 10) < 3) {
             this.characterSheet.items.push({
               item: allowedWeaponsMelee[0],
               amount: 1,
@@ -305,8 +304,8 @@ export default {
       this.characterSheet.items.find((item) => item.item.label === 'Деньги')
         .amount = money;
     },
-    generateName() {
-      this.characterSheet.header.name.value = 'Klevandos Ortego';
+    async generateName() {
+      this.characterSheet.header.name.value = await this.nameGenerator.getName();
     },
     applyModifiers() {
       this.characterSheet.spells = [];
