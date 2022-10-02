@@ -2,24 +2,27 @@
   <v-container class="player-card">
     <v-card class="player-card-header">
       <v-card-title class="player-card-header__inner">
-        <v-text-field
+        <component :is="header.component ?? 'v-text-field'" class="player-card-header__header"
           v-for="(header, key) in characterSheet.header"
           :key="key"
-          :value="header.value"
+          v-model="header.value"
           :label="header.label"
+          :items="header.items ?? []"
+          @change="key === 'race' ? onRaceChange() : undefined"
         >
-        </v-text-field>
+        </component>
       </v-card-title>
     </v-card>
     <!-- TODO: remake list v-cards as component -->
     <v-card class="player-card__stats">
       <v-card-title>Статы</v-card-title>
       <v-card-text>
-        <v-text-field
+        <v-text-field type="number"
           v-for="(stat, key) in characterSheet.stats"
           :key="key"
-          :label="stat.label"
-          :value="`${stat.value}${stat.modified ? '*' : ''}`"
+          :label="`${stat.label}${stat.modified ? '*' : ''}`"
+          v-model.lazy.number="stat.value"
+          @change="onStatChange"
         >
         </v-text-field>
       </v-card-text>
@@ -90,13 +93,16 @@ import {
   armor, weapons, ammo, stone,
 } from '@/data/items';
 import NameGenerator from '@/controllers/nameGenerator';
+import { VSelect, VTextField } from 'vuetify/lib/components';
 import races, { selectFromList } from '../data/races';
-
-// TODO: make price changes for dwarf!!
 
 export default {
   name: 'GeneratorView',
   props: ['raceId'],
+  components: {
+    VTextField,
+    VSelect,
+  },
   data: () => ({
     characterSheet: {
       header: {
@@ -107,6 +113,9 @@ export default {
         race: {
           label: 'Раса/Класс',
           value: '',
+          component: 'VSelect',
+          items: Object.entries(races)
+            .map(([raceId, race]) => ({ text: race.title, value: raceId })),
         },
         hp: {
           label: 'ХП (ОР)',
@@ -160,7 +169,27 @@ export default {
       // Can be made more hardcore by switching round with floor
       return Math.round(Math.random() * (max - min) + min);
     },
-    reset() {
+    onStatChange() {
+      this.characterSheet.header.race.value = undefined;
+      this.characterSheet.header.race.items = Object
+        .entries(races)
+        .filter(([, race]) => race.requirements(this.characterSheet.stats))
+        .map(([raceId, race]) => ({ text: race.title, value: raceId }));
+      this.characterSheet.abilities = [];
+      this.characterSheet.spells = [];
+      this.characterSheet.header.ac.value = '';
+      this.characterSheet.header.hp.value = '';
+      this.characterSheet.items = [];
+    },
+    onRaceChange() {
+      this.copyAbilities();
+      this.applyModifiers();
+      this.generateItems();
+      this.generateHp();
+      this.calculateArmorAndHp();
+      this.generateName();
+    },
+    resetStats() {
       Object.keys(this.characterSheet.stats).forEach((key) => {
         this.characterSheet.stats[key] = {
           label: this.characterSheet.stats[key].label,
@@ -197,7 +226,7 @@ export default {
       });
     },
     generateHp() {
-      const { min, max } = races[this.raceId].hp;
+      const { min, max } = races[this.characterSheet.header.race.value].hp;
       this.characterSheet.header.hp.value = this.randomInt(min, max);
     },
     generateItems() {
@@ -214,7 +243,7 @@ export default {
       // Offset armor price for dwarf
       let calculatePrice = (price) => price;
       if (this.characterSheet.abilities.find((ability) => ability.label === 'Требуется подгонка')) calculatePrice = (price) => this.modifyPrice(price, 5);
-      const allowedArmor = armor.filter(races[this.raceId].itemFilter)
+      const allowedArmor = armor.filter(races[this.characterSheet.header.race.value].itemFilter)
         .filter((item) => calculatePrice(item.price) < money)
         .sort((a, b) => b.price - a.price);
       if (allowedArmor.length > 0) {
@@ -237,11 +266,13 @@ export default {
         money -= calculatePrice(shield.price);
         shieldTaken = true;
       }
-      const allowedWeaponsMelee = weapons.filter(races[this.raceId].itemFilter)
+      const allowedWeaponsMelee = weapons
+        .filter(races[this.characterSheet.header.race.value].itemFilter)
         .filter((item) => item.price < money && item.ranged !== true
           && (shieldTaken ? item.twoHanded !== true : true))
         .sort((a, b) => b.attack.max - a.attack.max);
-      const allowedWeaponsRanged = weapons.filter(races[this.raceId].itemFilter)
+      const allowedWeaponsRanged = weapons
+        .filter(races[this.characterSheet.header.race.value].itemFilter)
         .filter((item) => item.price < money && item.ranged === true
           && (shieldTaken ? item.twoHanded !== true : true))
         .sort((a, b) => b.attack.max - a.attack.max);
@@ -309,13 +340,17 @@ export default {
     },
     applyModifiers() {
       this.characterSheet.spells = [];
-      races[this.raceId].postProcessing(this.characterSheet);
+      races[this.characterSheet.header.race.value].postProcessing(this.characterSheet);
       modifiers.forEach((modifier) => {
         modifier(this.characterSheet);
       });
     },
     copyAbilities() {
-      this.characterSheet.abilities = structuredClone(races[this.raceId].abilities);
+      this.characterSheet.abilities = structuredClone(
+        races[this.characterSheet.header.race.value].abilities,
+      );
+      // mark all abilities, copied from class, as class abilities
+      this.characterSheet.abilities.forEach((ability) => { ability.fromClass = true; });
     },
     calculateArmorAndHp() {
       const itemsSimplified = this.characterSheet.items
@@ -345,19 +380,24 @@ export default {
         .filter((ability) => !ability.modifier || !['ac', 'hp'].includes(ability.modifier.type));
     },
     generateCharacter() {
-      this.reset();
-      this.characterSheet.header.race.value = races[this.raceId].title;
-      this.generateName();
-      this.generateHp();
+      this.resetStats();
       this.generateStats();
-      while (this.raceId && !races[this.raceId].requirements(this.characterSheet.stats)) {
+      while (this.characterSheet.header.race.value
+        && !races[this.characterSheet.header.race.value]
+          .requirements(this.characterSheet.stats)) {
         this.generateStats();
       }
+      // this.characterSheet.header.race.value = races[this.raceId].title;
+      this.generateHp();
       this.copyAbilities();
       this.applyModifiers();
       this.generateItems();
       this.calculateArmorAndHp();
+      this.generateName();
     },
+  },
+  created() {
+    this.characterSheet.header.race.value = this.raceId;
   },
 };
 </script>
@@ -380,6 +420,10 @@ export default {
     width: 100%;
     justify-content: space-between;
     gap: 10px;
+  }
+
+  .player-card-header__header {
+    max-width: calc(20% - 20px);
   }
 
   .player-card__stats {
