@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <v-app>
-      <v-app-bar app>
+      <v-app-bar app class="d-print-none">
         <router-link to="/">К настройкам</router-link>
       </v-app-bar>
       <v-main app>
@@ -18,5 +18,9 @@
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+}
+
+@media print {
+
 }
 </style>

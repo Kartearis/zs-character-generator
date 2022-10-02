@@ -1,5 +1,5 @@
 <template>
-  <v-container class="player-card">
+  <v-container class="player-card" ref="player_card">
     <v-card class="player-card-header">
       <v-card-title class="player-card-header__inner">
         <component :is="header.component ?? 'v-text-field'" class="player-card-header__header"
@@ -80,6 +80,7 @@
         right
         fab
         @click="this.generateCharacter"
+        class="d-print-none"
       >
         <v-icon>mdi-progress-wrench</v-icon>
       </v-btn>
@@ -399,6 +400,9 @@ export default {
   created() {
     this.characterSheet.header.race.value = this.raceId;
   },
+  mounted() {
+    this.$refs.player_card.style.setProperty('--top-offset', `${this.$vuetify.application.top}px`);
+  },
 };
 </script>
 
@@ -408,6 +412,7 @@ export default {
     gap: 10px;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: min-content 1fr 1fr 1fr;
+    --top-offset: 0;
   }
 
   .player-card-header {
@@ -438,5 +443,16 @@ export default {
 
   .player-card__extra {
     grid-column: 1 / span 2;
+  }
+
+  @media print {
+    .player-card {
+      margin-top: calc(0px - var(--top-offset));
+      grid-template-rows: min-content repeat(2, minmax(min-content, 300px));
+    }
+
+    .player-card__extra {
+      display: none;
+    }
   }
 </style>
